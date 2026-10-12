@@ -1,0 +1,30 @@
+.account-sessions { border-bottom: 1px solid var(--line); }
+.account-sessions button { font: inherit; border: 0; color: var(--ink); background: transparent; cursor: pointer; font-size: 12px; }
+.account-sessions button:disabled { opacity: .45; cursor: wait; }
+.account-sessions-toggle { display: block; margin-left: auto; padding: 15px 0; text-decoration: underline; text-underline-offset: 5px; }
+.account-sessions section { padding: 30px 0 40px; animation: account-open 250ms ease-out; }
+.account-sessions-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.account-sessions-heading span { font: 10px/1.7 monospace; letter-spacing: .06em; }
+.account-sessions h2 { font: 40px/1.3 "Prata", Georgia, serif; margin: 15px 0; letter-spacing: -.035em; }
+.account-sessions p { max-width: 75ch; font-size: 13px; line-height: 1.8; color: var(--muted); }
+.account-sessions [role="alert"] { color: #963d48; }
+.account-sessions [role="status"] { color: var(--ink); }
+.account-sessions ol { list-style: none; padding: 0; margin: 26px 0; }
+.account-sessions li { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 20px; align-items: center; border-top: 1px solid var(--line); padding: 20px 0; }
+.account-session-index { font: 12px monospace; color: var(--muted); }
+.account-sessions li strong { display: block; font-size: 16px; margin-bottom: 8px; }
+.account-sessions li div > span { display: block; font-size: 11px; line-height: 1.8; color: var(--muted); }
+.account-session-current, .account-session-other { font: 9px monospace; padding: 9px 12px; }
+.account-session-current { background: #e4ed74; }
+.account-session-other { border: 1px solid var(--line); }
+.account-sessions button.account-session-action { background: var(--ink); color: #f5f2e9; padding: 17px 22px; margin: 12px 20px 0 0; }
+.account-session-confirm { border-top: 1px solid var(--ink); padding: 24px 0 0; }
+.account-sessions .account-sessions-footnote { font-size: 11px; }
+@keyframes account-open { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) {
+  .account-sessions-heading { align-items: start; flex-direction: column; gap: 4px; }
+  .account-sessions h2 { font-size: 31px; }
+  .account-sessions li { grid-template-columns: 22px minmax(0,1fr); gap: 12px; }
+  .account-session-current, .account-session-other { grid-column: 2; justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) { .account-sessions section { animation: none; } }

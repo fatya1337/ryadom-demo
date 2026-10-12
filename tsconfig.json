@@ -32,9 +32,6 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules",
-    ".publish",
-    "backups",
-    "handoff"
+    "node_modules"
   ]
 }

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Рядом — кабинет психотерапевта",
+  title: "Рядом — рабочий показ проекта",
   description:
-    "Кабинет психотерапевта: истории пациентов, наблюдения между сессиями и подготовка к встречам. Демонстрационный прототип.",
+    "Интерактивный показ двух кабинетов, результаты разработки и снимки рабочего стенда с общим API.",
   icons: { icon: `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/favicon.svg` },
 };
 export default function RootLayout({
