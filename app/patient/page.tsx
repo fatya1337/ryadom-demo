@@ -16,6 +16,7 @@ import DayPlan from "./day-plan";
 import Sessions from "./sessions";
 import AccessActivityJournal from "./access-activity";
 import { invitationLink } from "./invitation-link";
+import { demoLink } from "../../lib/demo-link";
 import { createPatientDemoClient } from "./demo-client";
 const base = "demonstration";
 const client = createPatientDemoClient();
@@ -41,6 +42,7 @@ const blank = (date: string): EntryInput => ({
 type Sharing = Awaited<ReturnType<typeof client.sharing>>;
 const emptySharing: Sharing = { grants: [], invitations: [] };
 const errors: Record<string, string> = {
+  DEMO_SPECIALIST_ONLY: "В показе используйте specialist@example.test — это учебный кабинет Анны.",
   INVALID_EMAIL_OR_PASSWORD: "Проверьте почту и пароль.",
   UNAUTHENTICATED: "Войдите снова — сессия закончилась.",
   REVISION_CONFLICT:
@@ -235,6 +237,20 @@ export default function PatientLive() {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
+  useEffect(() => {
+    if (!dataReady) return;
+    let active = true;
+    const unsubscribe = demoLink().subscribe(() => {
+      void Promise.all([client.entries(historyPeriod.from, historyPeriod.to), client.sharing()]).then(([history, access]) => {
+        if (!active) return;
+        setEntries(history.entries);
+        setSharing(access);
+        setInvitation(current => current && access.invitations.some(item => item.id === current.id) ? current : null);
+        // The editor is intentionally not filled here: another tab cannot erase a draft.
+      }).catch(error => { if (active) fail(error); });
+    });
+    return () => { active = false; unsubscribe(); };
+  }, [dataReady, historyPeriod]);
   async function openDate(date: string) {
     const ticket = generation.current;
     const result = await client.entries(date, date);
@@ -294,16 +310,18 @@ export default function PatientLive() {
           <br />
           ДНЕВНИК НАБЛЮДЕНИЙ
         </span>
-        <Link href="/">Кабинет специалиста ↗</Link>
+        <Link href="/" target="_blank" rel="noopener">Кабинет специалиста ↗</Link>
       </header>
       <div className="p-environment">
-        ИНТЕРАКТИВНЫЙ ПОКАЗ · ВЫМЫШЛЕННЫЕ ДАННЫЕ · БЕЗ СЕРВЕРА
+        АЛЕКСАНДРА · Р-014 · УЧЕБНЫЙ ДНЕВНИК, СВЯЗАННЫЙ СО СПЕЦИАЛИСТОМ
       </div>
       <details className="p-demo-guide">
         <summary>Об учебных данных</summary>
-        <p>Изменения действуют до перезагрузки. Кабинеты здесь независимы,
-        сервер не подключён. Вводите только вымышленные примеры.</p>
-        <button onClick={() => window.location.reload()}>Сбросить учебные изменения ↺</button>
+        <p>Сохранённая запись сразу появится у специалиста в этом же браузере,
+        пока ему открыт доступ. Для показа откройте оба кабинета в двух вкладках.
+        Сервер не подключён. Общий дневник и доступ остаются в памяти, пока открыта
+        хотя бы одна вкладка; план дня — до перезагрузки. Вводите только вымышленные примеры.</p>
+        <button disabled={dirty || planDirty || busy} onClick={() => void run(async () => { demoLink().reset(); await load(); setNotice("Общий учебный дневник и доступ восстановлены в обеих вкладках. План дня не изменён."); })}>Сбросить общий дневник ↺</button>
       </details>
       {error && (
         <p role="alert" className="p-alert">
@@ -559,7 +577,7 @@ export default function PatientLive() {
                     mergeEntry(entry);
                     fill(entry);
                     setNotice(
-                      "Учебная запись сохранена в памяти вкладки. Откройте «Историю», чтобы увидеть результат.",
+                      "Запись сохранена. При открытом доступе она сразу появится у специалиста в этом браузере — в дневнике Александры (Р-014).",
                     );
                   });
                 }}
@@ -812,7 +830,7 @@ export default function PatientLive() {
                     Создать приглашение ↗
                   </button>
                   <p className="p-muted">
-                    Одно применение, 24 часа. Новое приглашение отменяет прежние
+                    Учебный специалист: specialist@example.test. Одно применение, 24 часа. Новое приглашение отменяет прежние
                     неиспользованные коды.
                   </p>
                   {invitation && (
@@ -839,7 +857,7 @@ export default function PatientLive() {
                           Скопировать код ↗
                         </button>
                       </details>
-                      <p>Это образец приглашения. Учебный код не подключает другой кабинет и не отправляется по почте.</p>
+                      <p>Этот учебный код подключает кабинет специалиста в том же браузере. Передайте его вручную: письмо не отправляется.</p>
                     </div>
                   )}
                 </form>

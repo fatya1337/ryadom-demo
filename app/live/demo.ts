@@ -1,3 +1,4 @@
+import { demoLink } from "../../lib/demo-link";
 import type { Checklist } from "./checklist";
 import {
   RequestError,
@@ -7,7 +8,7 @@ import {
   type Patient,
 } from "./api";
 
-/** Synthetic, per-mount data. No network or browser storage; never a live API fallback. */
+/** Demo adapter: shared R-014 diary/access, local specialist notes. No live API fallback. */
 export function createDemoBackend() {
   const day = (offset: number) => {
     const now = new Date();
@@ -50,7 +51,10 @@ export function createDemoBackend() {
   const preparations = new Map<string, Checklist>();
   const notes = new Map<string, Note>();
   const revoked = new Set<string>();
+  const history = (id: string) => id === "demo-014" ? demoLink().entries() : histories.get(id) || [];
+  const allowed = (id: string) => id === "demo-014" ? !!demoLink().access().grantedAt : !revoked.has(id);
   const request: typeof api = async <T>(path: string, options = {}) => {
+    await demoLink().ready;
     const opts = options as Parameters<typeof api>[1];
     if (opts?.signal?.aborted) throw new DOMException("Aborted", "AbortError");
     if (path === "v1/me")
@@ -61,6 +65,11 @@ export function createDemoBackend() {
       } as T;
     if (path === "v1/therapist/invitations/accept" && opts?.method === "POST") {
       const code = (opts.body as { code?: string })?.code;
+      if (code?.toUpperCase() !== "DEMO-048") {
+        try { demoLink().accept(code || ""); }
+        catch { throw new RequestError(400, "INVITATION_UNAVAILABLE"); }
+        return { patientCode: "Р-014" } as T;
+      }
       if (code?.toUpperCase() !== "DEMO-048" || invitationAccepted)
         throw new RequestError(400, "INVITATION_UNAVAILABLE");
       invitationAccepted = true;
@@ -71,11 +80,12 @@ export function createDemoBackend() {
     }
     if (path === "v1/therapist/patients")
       return patients
-        .filter((p) => !revoked.has(p.id))
+        .filter((p) => allowed(p.id))
         .map((p) => {
-          const entries = histories.get(p.id) || [];
+          const entries = history(p.id);
           return {
             ...p,
+            grantedAt: p.id === "demo-014" ? demoLink().access().grantedAt! : p.grantedAt,
             entryCount: entries.length,
             latestEntryDate:
               entries
@@ -89,7 +99,7 @@ export function createDemoBackend() {
       /^\/v1\/therapist\/patients\/([^/]+)\/(entries|note|export|preparation)$/,
     );
     const patient = patients.find((p) => p.id === match?.[1]);
-    if (!match || !patient || revoked.has(patient.id))
+    if (!match || !patient || !allowed(patient.id))
       throw new RequestError(404, "NOT_FOUND");
     if (match[2] === "preparation") {
       const current = preparations.get(patient.id) || {
@@ -135,26 +145,28 @@ export function createDemoBackend() {
       to = url.searchParams.get("to") || "9999";
     return {
       patientCode: patient.displayCode,
-      entries: histories
-        .get(patient.id)!
+      entries: history(patient.id)
         .filter((e) => e.date >= from && e.date <= to),
     } as T;
   };
   return {
     request,
+    subscribe: (listener: () => void) => demoLink().subscribe(listener),
     profile: (id: string) => {
-      if (revoked.has(id) || !patients.some(p => p.id === id)) return undefined;
+      if (!allowed(id) || !patients.some(p => p.id === id)) return undefined;
       const names: Record<string, [string, string]> = {
         "demo-014": ["Александра", "АЛ"], "demo-027": ["Михаил", "МИ"],
         "demo-031": ["Дарья", "ДА"], "demo-048": ["Новый пациент", "НП"],
       };
       const [name, initials] = names[id] || [id, "—"];
-      return { name, initials, entries: (histories.get(id) || []).map(e => ({ ...e })) };
+      return { name, initials, entries: history(id).map(e => ({ ...e })) };
     },
     revoke: (id: string) => {
-      revoked.add(id);
+      if (id === "demo-014") demoLink().revoke();
+      else revoked.add(id);
     },
     reset: () => {
+      demoLink().reset();
       revoked.clear();
       invitationAccepted = false;
       const invitedIndex = patients.findIndex(p => p.id === "demo-048");

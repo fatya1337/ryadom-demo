@@ -305,6 +305,38 @@ export default function LiveWorkspace({ demo = false, patientHref }: { demo?: bo
   useEffect(() => {
     if (selected) void loadHistory(selected, range);
   }, [selected, range, loadHistory]);
+  // Push only shared diary data. Never replace the specialist's unsaved note/checklist.
+  useEffect(() => {
+    if (!simulation || me?.role !== "doctor") return;
+    let active = true;
+    let revision = 0;
+    return (() => {
+      const unsubscribe = simulation.subscribe(() => {
+        const ticket = ++revision;
+        const currentGeneration = generation.current;
+        void (async () => {
+          try {
+            const patients = await api<Patient[]>("v1/therapist/patients");
+            if (!active || ticket !== revision) return;
+            setList(patients);
+            if (!selected || selected.id !== "demo-014") return;
+            if (!patients.some(p => p.id === selected.id)) {
+              clearHistory();
+              setMessage("");
+              setError("Александра закрыла доступ. История убрана из кабинета.");
+              return;
+            }
+            const history = await api<{ entries: Entry[] }>(`v1/therapist/patients/${selected.id}/entries?from=${range.from}&to=${range.to}`);
+            if (!active || ticket !== revision || currentGeneration !== generation.current) return;
+            setEntries(history.entries);
+            setReport(current => current ? { ...current, entries: (simulation.profile(selected.id)?.entries || []).filter(e => e.date >= current.period.from && e.date <= current.period.to) } : null);
+            setMessage("Дневник Александры обновлён. Изменения получены из учебного кабинета пациента.");
+          } catch (e) { if (active && ticket === revision) fail(e); }
+        })();
+      });
+      return () => { active = false; unsubscribe(); };
+    })();
+  }, [simulation, me, selected, range, api, clearHistory, fail]);
   useEffect(() => {
     if (note.text === text) return;
     const warn = (event: BeforeUnloadEvent) => {
@@ -498,7 +530,7 @@ export default function LiveWorkspace({ demo = false, patientHref }: { demo?: bo
         </button>
         <span className="masthead-note">Пространство<br />психотерапевта.</span>
         <div className="header-right">
-          {patientHref && <Link className="live-link" href={patientHref} onClick={e => {
+          {patientHref && <Link className="live-link" href={patientHref} target="_blank" rel="noopener" onClick={e => {
             if (dirty || prepDirty) { e.preventDefault(); setMessage("Сохраните заметку и лист подготовки перед переходом."); }
           }}>Кабинет пациента ↗</Link>}
           {demo && <span className="demo-pill">ДЕМО</span>}
@@ -862,7 +894,7 @@ export default function LiveWorkspace({ demo = false, patientHref }: { demo?: bo
       <dialog ref={inviteDialog} onCancel={() => setInviteOpen(false)} aria-labelledby="invite-title" className="unified-invite">
         <div className="modal-heading"><h2 id="invite-title">По приглашению пациента</h2><button className="icon-button" onClick={() => setInviteOpen(false)} aria-label="Закрыть приглашение"><X size={20} /></button></div>
         <p>Пациент передаёт вам код и сам решает, когда закрыть доступ.</p>
-        {demo && <p className="info-box">Учебный пример: <strong>DEMO-048</strong>. Код добавляет вымышленный пустой дневник. Кабинеты на этой ссылке независимы.</p>}
+        {demo && <p className="info-box">Учебный пример: <strong>DEMO-048</strong>. Код добавляет вымышленный пустой дневник. Для Александры создайте код в её разделе «Мой специалист» и введите здесь.</p>}
         {error && <p role="alert" className="live-alert">{error}</p>}
         <form onSubmit={accept}><label htmlFor="invitation-code">Код, выданный пациентом</label>
           <input id="invitation-code" value={code} onChange={e => setCode(e.target.value)} maxLength={48} placeholder={demo ? "DEMO-048" : "Код приглашения"} autoComplete="off" />
@@ -947,8 +979,8 @@ export default function LiveWorkspace({ demo = false, patientHref }: { demo?: bo
         )}
       </dialog>
       {demo && <details className="unified-demo-controls">
-        <summary>Учебные данные · изменения до перезагрузки</summary>
-        <p>Вымышленные истории, без подключения к серверу. Кабинеты в публичном примере независимы.</p>
+        <summary>Учебные данные · связанные кабинеты</summary>
+        <p>Дневник Александры (Р-014) связан с кабинетом пациента в этом браузере. Откройте оба кабинета в двух вкладках. Сервер не подключён; вводите только вымышленные примеры. Общий дневник сохраняется, пока открыта хотя бы одна вкладка показа; заметки специалиста — до перезагрузки его вкладки.</p>
         {selected && <button className="live-link" disabled={dirty || prepDirty || busy} onClick={() => {
           simulation!.revoke(selected.id); clearHistory(); void refreshList();
           setMessage("Учебный сценарий: пациент отозвал доступ. Его история и заметки убраны.");
