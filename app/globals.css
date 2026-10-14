@@ -2913,3 +2913,12 @@ input::placeholder {
     color: #333 !important;
   }
 }
+
+/* The public cabinet keeps its original masthead on narrow screens. */
+@media (max-width: 600px) {
+  .therapist-app .masthead { flex-wrap: wrap; gap: 18px; padding: 24px 0 18px; }
+  .therapist-app .header-right { width: 100%; margin-left: 0; gap: 20px; justify-content: space-between; }
+  .therapist-app .header-right > a { white-space: nowrap; }
+  .therapist-app .therapist-name,
+  .therapist-app .doctor-monogram { display: none; }
+}

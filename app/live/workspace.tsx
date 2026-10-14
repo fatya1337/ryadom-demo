@@ -495,7 +495,7 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
             </button>
           ) : (
             <Link href="/" className="live-link">
-              К показу проекта <ArrowUpRight size={14} />
+              К пациентам <ArrowUpRight size={14} />
             </Link>
           )}
         </div>

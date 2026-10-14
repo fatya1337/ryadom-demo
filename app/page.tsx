@@ -1,27 +1,823 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Evidence from "./evidence";
-import "./tour.css";
-
-export default function Page() {
-  return <main className="tour">
-    <header className="tour-header"><Link href="/" className="tour-brand">рядом<span>↗</span></Link><span>РАБОЧИЙ ПОКАЗ ПРОЕКТА<br />12 ОКТЯБРЯ 2026</span><a href="#progress">Что сделано ↓</a></header>
-    <section className="tour-hero">
-      <div><span className="tour-label">ДНЕВНИК / ДОСТУП / ВСТРЕЧА</span><h1>От записи<br /><em>к встрече.</em></h1><p>Два кабинета одной платформы.<br />Пройдите сценарии сами — от записи дня<br />до подготовки психотерапевта к встрече.</p><a className="tour-primary" href="#try">Проверить в действии <span>↗</span></a></div>
-      <aside className="tour-index"><span className="tour-label">СОБРАНО ЗА ЭТАП</span><div><strong>02</strong><span>кабинета с работающими сценариями</span></div><div><strong>01</strong><span>общий API и PostgreSQL в серверной версии</span></div><div><strong>32</strong><span>проверки backend прошли: 15 unit + 17 integration</span></div><a href="#evidence">Посмотреть рабочий стенд ↓</a></aside>
-    </section>
-    <p className="tour-caption">Эта ссылка — автономный интерактивный показ. Вымышленные данные хранятся в памяти вкладки; сервер здесь не подключён. Кабинеты в этом показе независимы. Ниже — результаты работы и снимки настоящего локального стенда с API.</p>
-    <section id="try" className="tour-section"><div className="tour-section-head"><span className="tour-label">01 / ПОПРОБОВАТЬ САМОСТОЯТЕЛЬНО</span><h2>Пять минут.<br /><em>Две стороны.</em></h2></div>
-      <Link href="/showcase/" className="tour-route"><span className="tour-number">01</span><div><h3>Кабинет психотерапевта</h3><p>Откройте Р-014 → смените период → сохраните заметку → откройте сводку → покажите отзыв доступа.</p><span className="tour-route-note">Реестр · графики · личные заметки · подготовка</span></div><span className="tour-arrow">↗</span></Link>
-      <Link href="/patient/" className="tour-route"><span className="tour-number">02</span><div><h3>Дневник пациента</h3><p>Измените запись → сохраните → найдите её в истории. Добавьте дело в план и отзовите учебное разрешение.</p><span className="tour-route-note">Дневник · архив · план дня · управление доступом</span></div><span className="tour-arrow">↗</span></Link>
-      <p className="tour-small">Логин не нужен. Изменения сбрасываются после перезагрузки. Используйте только вымышленные примеры. Учебный код приглашения не выдаёт реальный доступ.</p>
-    </section>
-    <section id="evidence" className="tour-section"><span className="tour-label">02 / РАБОТА С ОБЩИМ СЕРВЕРОМ</span><h2>Из рабочего<br /><em>стенда.</em></h2><p className="tour-intro">Снимки сделаны при проверке 12 октября: оба кабинета подключены к локальному API и PostgreSQL, данные учебные. Это разбор этапа разработки, а не запись действий на этом Pages-сайте.</p><Evidence /></section>
-    <section id="progress" className="tour-section"><span className="tour-label">03 / ЧТО РЕАЛИЗОВАНО</span><h2>За экранами —<br /><em>общая работа.</em></h2>
-      <div className="tour-flow" aria-label="Архитектура серверной версии"><span>Пациент</span><b>↔</b><span>Общий API<br /><small>PostgreSQL · Prisma · Better Auth</small></span><b>↔</b><span>Психотерапевт</span></div>
-      <dl className="tour-work"><div><dt>Записи сохраняются</dt><dd>Одна запись на дату, история, архив и выгрузка. Сервер проверяет версию записи, чтобы изменения из разных вкладок не затёрли друг друга.</dd></div><div><dt>Доступ решает пациент</dt><dd>Приглашение адресовано почте специалиста. Разрешение проверяется на каждом чтении, выгрузке и сохранении заметки; отзыв закрывает новые запросы.</dd></div><div><dt>У каждого своё пространство</dt><dd>План пациента личный. Заметки и подготовка принадлежат конкретному специалисту и не включаются в выгрузку дневника.</dd></div><div><dt>Ошибки не прячутся</dt><dd>Обрыв связи и конфликт версий показаны явно. Черновик остаётся в открытой вкладке; автоматических повторных записей нет.</dd></div><div><dt>Входами можно управлять</dt><dd>Оба кабинета показывают активные сессии и позволяют завершить остальные, сохранив текущую. Эта функция проверяется в серверной версии.</dd></div><div><dt>Проверки воспроизводимы</dt><dd>17 интеграционных сценариев проходят на временной PostgreSQL с настоящими HTTP-запросами. Ещё 15 тестов проверяют валидацию и клиентский транспорт.</dd></div></dl>
-      <div className="tour-links"><a href="https://github.com/barmood-team/platform-doctor/actions/runs/38257068583" target="_blank" rel="noreferrer">Проверки backend — success ↗</a><a href="https://github.com/barmood-team/platform-doctor/pull/1" target="_blank" rel="noreferrer">Код специалиста и API ↗</a><a href="https://github.com/barmood-team/platform-biplyar/pull/1" target="_blank" rel="noreferrer">Код пациента ↗</a></div><p className="tour-small">Для закрытых репозиториев нужен доступ к организации barmood-team. Изменения находятся в draft PR, в main ещё не объединены.</p>
-    </section>
-    <section className="tour-next"><span className="tour-label">СЛЕДУЮЩИЙ ЭТАП</span><p>Внешний сервер, выдача реальных аккаунтов, почта, интеграция Telegram/MAX и резервные копии. Автоматического определения фаз и постановки диагноза нет.</p><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages" target="_blank" rel="noreferrer">Почему Pages показывает интерфейс без базы ↗</a></section>
-    <footer className="tour-footer"><span>рядом / работа между встречами</span><a href="#try">К кабинетам ↑</a></footer>
-  </main>;
+import {
+  ArrowUpRight,
+  ArrowLeft,
+  ArrowRight,
+  Plus,
+  Search,
+  X,
+  Check,
+  LockKeyhole,
+  BookOpen,
+  Download,
+  ShieldCheck,
+} from "lucide-react";
+type Person = {
+  id: string;
+  alias: string;
+  initials: string;
+  session: string;
+  available: boolean;
+  values: number[];
+  sleep: number[];
+  energy: number[];
+  texts: string[];
+};
+const patients: Person[] = [
+  {
+    id: "P-014",
+    alias: "Александра",
+    initials: "АЛ",
+    session: "22 сентября · 11:00",
+    available: true,
+    values: [6, 7, 6, 6, 5, 6, 6, 5, 4, 5, 4, 5, 5, 6],
+    sleep: [8, 8, 7.5, 8, 7, 7, 7.5, 6.5, 6, 6, 6.5, 6, 7, 7],
+    energy: [6, 6, 6, 5, 6, 6, 5, 5, 4, 4, 5, 4, 5, 6],
+    texts: [
+      "В последние дни чуть сложнее вставать утром. Хочу обсудить это на встрече.",
+      "После работы вышла на прогулку. Помогло переключиться и отдохнуть.",
+      "День прошёл спокойно. Вечером читала, легла немного раньше.",
+    ],
+  },
+  {
+    id: "P-021",
+    alias: "Михаил",
+    initials: "МИ",
+    session: "22 сентября · 14:00",
+    available: true,
+    values: [5, 6, 6, 5, 6, 7, 6, 6, 7, 6, 6, 7, 6, 6],
+    sleep: [7, 7, 8, 7, 7, 8, 8, 7, 8, 7, 7, 8, 7, 8],
+    energy: [5, 6, 5, 6, 6, 7, 6, 5, 6, 6, 5, 6, 6, 6],
+    texts: [
+      "Получилось сохранить привычный режим даже в выходные.",
+      "На работе было много дел, но вечером нашёл время для отдыха.",
+      "Хочу поговорить о том, как планировать неделю без перегрузки.",
+    ],
+  },
+  {
+    id: "P-032",
+    alias: "Дарья",
+    initials: "ДА",
+    session: "23 сентября · 10:00",
+    available: true,
+    values: [5, 5, 6, 5, 5, 6, 6, 6, 6, 7, 6, 7, 7, 6],
+    sleep: [6, 6.5, 7, 7, 7, 7, 8, 7.5, 8, 8, 7.5, 8, 8, 8],
+    energy: [4, 4, 5, 4, 5, 5, 6, 5, 6, 6, 6, 7, 6, 6],
+    texts: [
+      "Вернулась к вечерним прогулкам. Пока получается несколько раз в неделю.",
+      "Утро прошло без спешки, позавтракала дома.",
+      "На следующей встрече хочу вернуться к разговору о работе.",
+    ],
+  },
+  {
+    id: "P-009",
+    alias: "Сергей",
+    initials: "СЕ",
+    session: "Встреча не назначена",
+    available: false,
+    values: [],
+    sleep: [],
+    energy: [],
+    texts: [],
+  },
+];
+function Spark({
+  values,
+  large = false,
+}: {
+  values: number[];
+  large?: boolean;
+}) {
+  const w = large ? 780 : 150,
+    h = large ? 200 : 40;
+  return (
+    <svg
+      className={large ? "case-chart" : "spark"}
+      viewBox={`0 0 ${w} ${h}`}
+      role="img"
+      aria-label="Демонстрационный график настроения"
+    >
+      {large &&
+        [2, 4, 6, 8, 10].map((n) => (
+          <g key={n}>
+            <line
+              x1="28"
+              x2={w - 10}
+              y1={h - 20 - n * 15}
+              y2={h - 20 - n * 15}
+              stroke="#d6d3ca"
+              strokeDasharray="3 6"
+            />
+            <text x="3" y={h - 16 - n * 15} fontSize="9" fill="#8d8990">
+              {n}
+            </text>
+          </g>
+        ))}
+      <polyline
+        points={values
+          .map(
+            (n, i) =>
+              `${(large ? 30 : 3) + (i * (w - (large ? 44 : 6))) / Math.max(values.length - 1, 1)},${large ? h - 20 - n * 15 : h - 4 - n * 3}`,
+          )
+          .join(" ")}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={large ? 2.5 : 1.6}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+function Popup({
+  title,
+  close,
+  children,
+}: {
+  title: string;
+  close: () => void;
+  children: React.ReactNode;
+}) {
+  const r = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    r.current?.showModal();
+  }, []);
+  return (
+    <dialog ref={r} onCancel={close}>
+      <div className="modal-heading">
+        <h2>{title}</h2>
+        <button className="icon-button" onClick={close} aria-label="Закрыть">
+          <X size={20} />
+        </button>
+      </div>
+      {children}
+    </dialog>
+  );
+}
+export default function Therapist() {
+  const [active, setActive] = useState<Person | null>(null);
+  const [tab, setTab] = useState<"patients" | "sessions">("patients");
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [period, setPeriod] = useState(14);
+  const [modal, setModal] = useState<"invite" | "about" | "report" | null>(
+    null,
+  );
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [linked, setLinked] = useState(false);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [draft, setDraft] = useState("");
+  const [toast, setToast] = useState("");
+  const [prepared, setPrepared] = useState<Record<string, number[]>>({});
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(""), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+  const all = linked
+    ? [
+        ...patients,
+        {
+          ...patients[1],
+          id: "P-048",
+          alias: "Новый демопациент",
+          initials: "НП",
+          session: "Встреча не назначена",
+          values: [],
+          sleep: [],
+          energy: [],
+          texts: [],
+        },
+      ]
+    : patients;
+  const shown = all.filter(
+    (p) =>
+      (filter === "all" ||
+        (filter === "active" ? p.available : !p.available)) &&
+      `${p.alias} ${p.id}`.toLowerCase().includes(query.toLowerCase()),
+  );
+  const open = (p: Person) => {
+    if (!p.available) return;
+    setActive(p);
+    setDraft(notes[p.id] || "");
+    setPeriod(14);
+  };
+  const vals = active?.values.slice(-period) || [];
+  const sleeps = active?.sleep.slice(-period) || [];
+  const mean = (a: number[]) =>
+    a.length
+      ? (a.reduce((s, n) => s + n, 0) / a.length).toFixed(1).replace(".", ",")
+      : "—";
+  const report = () => {
+    if (!active?.available) return;
+    const result = {
+      author_code: active.id,
+      notice: "Демонстрационные данные. Не медицинское заключение.",
+      period_days: period,
+      mood: vals,
+      sleep_hours: sleeps,
+      energy: active.energy.slice(-period),
+      entries: active.texts,
+    };
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(result, null, 2)], { type: "application/json" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ryadom-${active.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setToast("Демосводка скачана в JSON");
+  };
+  const prepItems = [
+    "Посмотреть отметки между встречами",
+    "Прочитать записи пациента",
+    "Подготовить вопросы к сессии",
+  ];
+  return (
+    <div className="therapist-app">
+      <main>
+        <header className="masthead">
+          <Link className="brand" href="/">
+            рядом<span className="brand-mark">↗</span>
+          </Link>
+          <span className="masthead-note">
+            Пространство
+            <br />
+            психотерапевта.
+          </span>
+          <div className="header-right">
+            <Link href="/patient/" style={{ fontSize: 11 }}>Кабинет пациента ↗</Link>
+            <Link href="/live/" style={{ fontSize: 11 }}>Расширенный кабинет ↗</Link>
+            <span className="demo-pill">ДЕМО</span>
+            <span className="therapist-name">Анна / психотерапевт</span>
+            <span className="doctor-monogram">А</span>
+          </div>
+        </header>
+        <nav className="chapter-nav">
+          <button
+            className={tab === "patients" ? "active" : ""}
+            onClick={() => {
+              setTab("patients");
+              setActive(null);
+            }}
+          >
+            <span>01</span>Пациенты <ArrowUpRight size={14} />
+          </button>
+          <button
+            className={tab === "sessions" ? "active" : ""}
+            onClick={() => {
+              setTab("sessions");
+              setActive(null);
+            }}
+          >
+            <span>02</span>Подготовка к встречам <ArrowUpRight size={14} />
+          </button>
+          <button className="about-nav" onClick={() => setModal("about")}>
+            Как связана платформа <ArrowUpRight size={14} />
+          </button>
+        </nav>
+        <div className="content">
+          {!active ? (
+            <>
+              <div className="page-heading therapist-heading">
+                <div>
+                  <div className="eyebrow">
+                    ВАША ПРАКТИКА / ДЕМО · СЕНТЯБРЬ 2026
+                  </div>
+                  <h1>
+                    {tab === "patients" ? (
+                      <>
+                        За каждой записью —<br />
+                        <em>человек.</em>
+                      </>
+                    ) : (
+                      <>
+                        До встречи —<br />
+                        <em>всё важное рядом.</em>
+                      </>
+                    )}
+                  </h1>
+                  <p>
+                    {tab === "patients"
+                      ? "Дневники пациентов и наблюдения между сессиями."
+                      : "Откройте историю пациента, чтобы подготовиться к разговору."}
+                  </p>
+                </div>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    setModal("invite");
+                    setError("");
+                    setCode("");
+                  }}
+                >
+                  Ввести код пациента <Plus size={17} />
+                </button>
+              </div>
+              {tab === "patients" ? (
+                <>
+                  <div className="practice-strip">
+                    <span>
+                      <strong>
+                        {all
+                          .filter((p) => p.available)
+                          .length.toString()
+                          .padStart(2, "0")}
+                      </strong>
+                      доступных дневника
+                    </span>
+                    <span>
+                      <strong>03</strong>предстоящие встречи
+                    </span>
+                    <div>
+                      <ShieldCheck size={17} />
+                      <p>
+                        Доступ открывает пациент.
+                        <br />
+                        Вы видите только то, чем он поделился.
+                      </p>
+                    </div>
+                    <span className="practice-stamp">
+                      ВНИМАНИЕ
+                      <br />К ЧЕЛОВЕКУ ↗
+                    </span>
+                  </div>
+                  <div className="roster-tools">
+                    <div className="roster-filters">
+                      {[
+                        ["all", "Все пациенты"],
+                        ["active", "Доступ открыт"],
+                        ["closed", "Доступ закрыт"],
+                      ].map(([v, t]) => (
+                        <button
+                          key={v}
+                          onClick={() => setFilter(v)}
+                          className={filter === v ? "selected" : ""}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                    <label className="patient-search">
+                      <Search size={15} />
+                      <input
+                        aria-label="Поиск пациента"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Имя или код пациента"
+                      />
+                    </label>
+                  </div>
+                  <div className="roster">
+                    <div className="roster-head">
+                      <span>ПАЦИЕНТ</span>
+                      <span>ДНЕВНИК / 14 ДНЕЙ</span>
+                      <span>НАСТРОЕНИЕ / ДИНАМИКА</span>
+                      <span>СЛЕДУЮЩАЯ ВСТРЕЧА</span>
+                      <span />
+                    </div>
+                    {shown.map((p) => (
+                      <button
+                        className={`roster-row ${!p.available ? "unavailable" : ""}`}
+                        key={p.id}
+                        onClick={() => open(p)}
+                        disabled={!p.available}
+                      >
+                        <span className="person-cell">
+                          <span className="person-initials">{p.initials}</span>
+                          <span>
+                            <strong>{p.alias}</strong>
+                            <small>{p.id} · вымышленный профиль</small>
+                          </span>
+                        </span>
+                        <span className="roster-records">
+                          {p.available ? (
+                            <>
+                              <strong>{p.values.length} записей</strong>
+                              <small>
+                                {p.values.length
+                                  ? "Последняя · 20 сентября"
+                                  : "Ждём первую запись"}
+                              </small>
+                            </>
+                          ) : (
+                            <>
+                              <LockKeyhole size={14} />
+                              <strong>Доступ отозван</strong>
+                            </>
+                          )}
+                        </span>
+                        <span>
+                          {p.values.length ? (
+                            <Spark values={p.values} />
+                          ) : (
+                            <span className="muted">
+                              {p.available
+                                ? "Пока нет данных"
+                                : "Данные недоступны"}
+                            </span>
+                          )}
+                        </span>
+                        <span className="session-cell">{p.session}</span>
+                        <ArrowUpRight size={21} />
+                      </button>
+                    ))}
+                    {!shown.length && (
+                      <div className="empty">
+                        Пациенты не найдены. Измените запрос или фильтр.
+                      </div>
+                    )}
+                  </div>
+                  <div className="roster-bottom">
+                    <span>Все имена, записи и встречи вымышлены.</span>
+                    <span>Наблюдения ≠ диагноз</span>
+                  </div>
+                  <section className="workflow-note">
+                    <span className="mono">
+                      ОДНА ИСТОРИЯ / ДВА ПРОСТРАНСТВА
+                    </span>
+                    <p>
+                      Пациент ведёт дневник.
+                      <br />
+                      <em>Вы видите контекст.</em>
+                    </p>
+                    <div>
+                      Пациент отмечает самочувствие в личном кабинете.
+                      Вы работаете с его историей, когда он открывает доступ.
+                      <button
+                        className="text-button"
+                        onClick={() => setModal("about")}
+                      >
+                        Как это будет работать <ArrowUpRight size={16} />
+                      </button>
+                    </div>
+                  </section>
+                </>
+              ) : (
+                <div className="session-list">
+                  {patients
+                    .filter((p) => p.available)
+                    .map((p, i) => (
+                      <button key={p.id} onClick={() => open(p)}>
+                        <span className="session-number">0{i + 1}</span>
+                        <span>
+                          <small>{p.session}</small>
+                          <strong>{p.alias}</strong>
+                          <span>
+                            {p.id} · {p.values.length} записей к просмотру
+                          </span>
+                        </span>
+                        <span className="session-action">
+                          Открыть историю <ArrowUpRight size={22} />
+                        </span>
+                      </button>
+                    ))}
+                  <p className="footnote">
+                    Расписание демонстрационное. Календарь и назначение встреч
+                    ещё не подключены.
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <button
+                className="text-button back-to-patients"
+                onClick={() => setActive(null)}
+              >
+                <ArrowLeft size={15} />К пациентам
+              </button>
+              <div className="case-heading">
+                <div>
+                  <div className="eyebrow">ИСТОРИЯ ПАЦИЕНТА / {active.id}</div>
+                  <h1>
+                    {active.alias}
+                    <span className="case-id">{active.id}</span>
+                  </h1>
+                  <p>
+                    <span className="access-dot" />
+                    Демодоступ открыт пациентом · следующая встреча:{" "}
+                    {active.session}
+                  </p>
+                </div>
+                <button
+                  className="secondary"
+                  onClick={() => setModal("report")}
+                >
+                  <Download size={16} />
+                  Сводка к встрече
+                </button>
+              </div>
+              <div className="case-layout">
+                <div>
+                  <section className="case-dynamics">
+                    <div className="section-head">
+                      <div>
+                        <span className="mono">01 / МЕЖДУ ВСТРЕЧАМИ</span>
+                        <h2>Что менялось в отметках</h2>
+                      </div>
+                      <div className="segments">
+                        {[7, 14, 30].map((n) => (
+                          <button
+                            key={n}
+                            className={period === n ? "selected" : ""}
+                            onClick={() => setPeriod(n)}
+                          >
+                            {n} дней
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {vals.length ? (
+                      <>
+                        <div className="case-measures">
+                          <span>
+                            Настроение{" "}
+                            <strong>
+                              {mean(vals)}
+                              <small>/10</small>
+                            </strong>
+                          </span>
+                          <span>
+                            Сон{" "}
+                            <strong>
+                              {mean(sleeps)}
+                              <small>ч</small>
+                            </strong>
+                          </span>
+                          <span>
+                            Энергия{" "}
+                            <strong>
+                              {mean(active.energy.slice(-period))}
+                              <small>/10</small>
+                            </strong>
+                          </span>
+                        </div>
+                        <Spark values={vals} large />
+                        <div className="graph-caption">
+                          <span>Настроение / самооценка пациента</span>
+                          <span>
+                            {period === 7 ? "14" : "7"}–20 сентября ·{" "}
+                            {vals.length} отметок
+                          </span>
+                        </div>
+                        <p className="footnote">
+                          Показаны средние значения и записи. Личная норма пока
+                          не рассчитана; автоматические выводы о состоянии не
+                          формируются.
+                        </p>
+                      </>
+                    ) : (
+                      <div className="empty">
+                        <BookOpen />
+                        <h3>История ещё не началась</h3>
+                        <p>
+                          Здесь появятся записи, когда пациент начнёт вести
+                          дневник.
+                        </p>
+                      </div>
+                    )}
+                  </section>
+                  <section className="case-entries">
+                    <span className="mono">02 / ГОЛОС ПАЦИЕНТА</span>
+                    <h2>Своими словами</h2>
+                    {active.texts.map((t, i) => (
+                      <article key={i}>
+                        <div>
+                          <strong>{20 - i}</strong>
+                          <small>СЕН</small>
+                        </div>
+                        <blockquote>
+                          {t}
+                          <footer>Демо · дневник пациента</footer>
+                        </blockquote>
+                      </article>
+                    ))}
+                    {!active.texts.length && (
+                      <p className="muted">Пока нет записей.</p>
+                    )}
+                  </section>
+                </div>
+                <aside className="session-prep">
+                  <span className="mono">03 / К СЛЕДУЮЩЕЙ ВСТРЕЧЕ</span>
+                  <h2>
+                    Сначала услышать.
+                    <br />
+                    <em>Потом обсудить.</em>
+                  </h2>
+                  <p>
+                    Отметьте, к чему хотите вернуться на сессии. Это ваши
+                    рабочие заметки.
+                  </p>
+                  <div className="prep-checklist">
+                    {prepItems.map((label, i) => (
+                      <label key={label}>
+                        <input
+                          type="checkbox"
+                          checked={(prepared[active.id] || []).includes(i)}
+                          onChange={() =>
+                            setPrepared((old) => {
+                              const list = old[active.id] || [];
+                              return {
+                                ...old,
+                                [active.id]: list.includes(i)
+                                  ? list.filter((n) => n !== i)
+                                  : [...list, i],
+                              };
+                            })
+                          }
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <label htmlFor="session-note">Заметка психотерапевта</label>
+                  <textarea
+                    id="session-note"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    maxLength={5000}
+                    placeholder="Что уточнить? Какие записи обсудить?"
+                    rows={8}
+                  />
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setNotes((s) => ({ ...s, [active.id]: draft }));
+                      setToast("Заметка сохранена до перезагрузки страницы");
+                    }}
+                  >
+                    Сохранить заметку <Check size={16} />
+                  </button>
+                  <span className="note-status" role="status">
+                    {draft === (notes[active.id] || "")
+                      ? "Все изменения сохранены"
+                      : "Есть несохранённые изменения"}
+                  </span>
+                  <span className="private-note">
+                    <LockKeyhole size={13} />
+                    Учебная заметка · до перезагрузки страницы
+                  </span>
+                  <div className="prep-principle">
+                    <ShieldCheck size={22} />
+                    <p>
+                      Дневник помогает подготовить вопросы. Он не заменяет
+                      разговор с человеком.
+                    </p>
+                  </div>
+                </aside>
+              </div>
+            </>
+          )}
+          <footer>
+            <span className="footer-brand">рядом</span>
+            <span>Кабинет психотерапевта</span>
+            <span>Вымышленные данные · Без сервера · Изменения до перезагрузки</span>
+          </footer>
+        </div>
+      </main>
+      {modal === "report" && active && (
+        <Popup
+          title={`Сводка к встрече · ${active.id}`}
+          close={() => setModal(null)}
+        >
+          <div className="print-report">
+            <p className="report-label">РЯДОМ / КАБИНЕТ ПСИХОТЕРАПЕВТА</p>
+            <h3>Пациент {active.id}</h3>
+            <p>
+              Демонстрационная история · 7–20 сентября 2026
+              <br />
+              Выбрано {period} дней; доступно {vals.length} отметок.
+            </p>
+            <div className="report-values">
+              <span>
+                Настроение <strong>{mean(vals)} / 10</strong>
+              </span>
+              <span>
+                Сон <strong>{mean(sleeps)} ч</strong>
+              </span>
+              <span>
+                Энергия{" "}
+                <strong>{mean(active.energy.slice(-period))} / 10</strong>
+              </span>
+            </div>
+            <h3>Последние записи пациента</h3>
+            {active.texts.length ? (
+              active.texts.map((t, i) => (
+                <p key={i}>
+                  <strong>{20 - i} сентября.</strong> {t}
+                </p>
+              ))
+            ) : (
+              <p>Пока нет записей.</p>
+            )}
+            <h3>Заметка психотерапевта</h3>
+            <p className="report-note">
+              {notes[active.id] || "Сохранённой заметки пока нет."}
+            </p>
+            {draft !== (notes[active.id] || "") && (
+              <p className="report-unsaved">
+                В сводке сохранённая версия заметки. Закройте окно и сохраните
+                изменения, чтобы включить их.
+              </p>
+            )}
+            <p className="footnote">
+              Все данные вымышлены. Сводка не является медицинским заключением.
+              Автоматические выводы о состоянии не формируются.
+            </p>
+          </div>
+          <div className="modal-actions report-actions">
+            <button className="secondary" onClick={report}>
+              Данные JSON
+            </button>
+            <button className="primary" onClick={() => window.print()}>
+              Печать / сохранить PDF <Download size={16} />
+            </button>
+          </div>
+        </Popup>
+      )}
+      {modal === "invite" && (
+        <Popup title="По приглашению пациента" close={() => setModal(null)}>
+          <p>
+            Пациент создаёт код в своём приложении и передаёт вам. Только после
+            этого открывается его история.
+          </p>
+          <div className="info-box">
+            Пока кабинеты не соединены с общей базой. Для показа используйте
+            вымышленный код <strong>DEMO-048</strong>.
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (code.trim().toUpperCase() !== "DEMO-048") {
+                setError("Демокод не найден. Используйте DEMO-048.");
+                return;
+              }
+              setLinked(true);
+              setModal(null);
+              setTab("patients");
+              setActive(null);
+              setFilter("all");
+              setQuery("");
+              setToast(
+                linked ? "Пациент уже в списке" : "Демоприглашение принято",
+              );
+            }}
+          >
+            <label className="field-label" htmlFor="patient-code">
+              Код, выданный пациентом
+            </label>
+            <input
+              id="patient-code"
+              className="full-input"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="DEMO-048"
+              required
+            />
+            {error && (
+              <p role="alert" className="error">
+                {error}
+              </p>
+            )}
+            <div className="modal-actions">
+              <button className="primary">
+                Открыть доступ <ArrowRight size={16} />
+              </button>
+            </div>
+          </form>
+        </Popup>
+      )}
+      {modal === "about" && (
+        <Popup title="Один продукт. Две стороны." close={() => setModal(null)}>
+          <p>
+            <strong>Ваша часть — кабинет психотерапевта.</strong> Список
+            пациентов, просмотр дневника и динамики, заметки и подготовка к
+            встрече.
+          </p>
+          <p>
+            <strong>Вторая часть платформы — приложение пациента и бот.</strong>{" "}
+            Записи, напоминания, самонаблюдение, выдача и отзыв доступа.
+          </p>
+          <div className="info-box">
+            В серверной версии оба кабинета работают через общий API и базу.
+            По этой ссылке — автономный пример: вымышленные профили, заметки
+            в памяти страницы и симуляция приглашения. Кабинеты здесь независимы,
+            подключения к серверу и боту нет.
+          </div>
+        </Popup>
+      )}
+      {toast && (
+        <div className="toast" role="status">
+          <Check size={16} />
+          {toast}
+        </div>
+      )}
+    </div>
+  );
 }

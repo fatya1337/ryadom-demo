@@ -294,18 +294,17 @@ export default function PatientLive() {
           <br />
           ДНЕВНИК НАБЛЮДЕНИЙ
         </span>
-        <Link href="/">К показу проекта ↗</Link>
+        <Link href="/">Кабинет специалиста ↗</Link>
       </header>
       <div className="p-environment">
         ИНТЕРАКТИВНЫЙ ПОКАЗ · ВЫМЫШЛЕННЫЕ ДАННЫЕ · БЕЗ СЕРВЕРА
       </div>
-      <section className="p-demo-guide" aria-label="Как проверить дневник">
-        <p><strong>Попробуйте:</strong> измените текст → сохраните день → откройте «Историю».
-        Затем добавьте дело в «План дня» и проверьте отзыв в «Мой специалист».</p>
-        <p>Данные живут только в памяти этой вкладки до перезагрузки. Этот пример не связан
-        с демонстрацией специалиста и не отправляет записи на сервер. Вводите только вымышленные примеры.</p>
-        <button onClick={() => window.location.reload()}>Начать показ заново ↺</button>
-      </section>
+      <details className="p-demo-guide">
+        <summary>Об учебных данных</summary>
+        <p>Изменения действуют до перезагрузки. Кабинеты здесь независимы,
+        сервер не подключён. Вводите только вымышленные примеры.</p>
+        <button onClick={() => window.location.reload()}>Сбросить учебные изменения ↺</button>
+      </details>
       {error && (
         <p role="alert" className="p-alert">
           {error}

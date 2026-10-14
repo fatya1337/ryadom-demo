@@ -1,4 +1,5 @@
-import LiveWorkspace from "../live/workspace";
+import Therapist from "../page";
+
 export default function Page() {
-  return <LiveWorkspace demo />;
+  return <Therapist />;
 }
