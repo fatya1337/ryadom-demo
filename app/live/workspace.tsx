@@ -8,6 +8,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Download,
+  X,
 } from "lucide-react";
 import {
   API_URL,
@@ -19,6 +20,8 @@ import {
   type Note,
 } from "./api";
 import "./live.css";
+import "./unified.css";
+import Registry from "./registry";
 import PeriodPicker from "./period-picker";
 import { recentPeriod, periodDays, type Period } from "./period";
 import Preparation from "./preparation";
@@ -108,7 +111,14 @@ function Chart({
   );
 }
 
-export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
+export default function LiveWorkspace({ demo = false, patientHref }: { demo?: boolean; patientHref?: string }) {
+  const [tab, setTab] = useState<"patients" | "preparation" | "account">("patients");
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const inviteDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (inviteOpen) inviteDialog.current?.showModal();
+    else inviteDialog.current?.close();
+  }, [inviteOpen]);
   const [simulation] = useState(() => (demo ? createDemoBackend() : null));
   const api = simulation?.request || serverApi;
   const [prepDirty, setPrepDirty] = useState(false);
@@ -136,6 +146,7 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
     [booting, setBooting] = useState(true);
   const [list, setList] = useState<Patient[]>([]),
     [selected, setSelected] = useState<Patient | null>(null);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [selected, tab]);
   const [entries, setEntries] = useState<Entry[]>([]),
     [note, setNote] = useState<Note>(blankNote),
     [text, setText] = useState("");
@@ -358,6 +369,7 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
       });
       setCode("");
       setLinkedInvitation(false);
+      setInviteOpen(false);
       await refreshList();
       setMessage("Пациент добавлен. Можно открыть историю.");
     } catch (e) {
@@ -453,7 +465,7 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
   const filteredPatients = list
     .filter(
       (p) =>
-        p.displayCode
+        `${p.displayCode} ${simulation?.profile(p.id)?.name || ""}`
           .toLocaleLowerCase()
           .includes(query.trim().toLocaleLowerCase()) &&
         (registryFilter === "all" ||
@@ -478,74 +490,27 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
       : "—";
   const dirty = note.text !== text;
   return (
-    <main className={`live-workspace ${report ? "live-report-open" : ""}`}>
+    <main className={`live-workspace unified-workspace ${report ? "live-report-open" : ""}`}>
       <header className="masthead">
-        <Link href="/" className="brand">
-          <span className="brand-mark">↗</span>рядом
-        </Link>
-        <span className="masthead-note">
-          ПРОСТРАНСТВО
-          <br />
-          ПСИХОТЕРАПЕВТА
-        </span>
+        <button type="button" className="brand unified-brand" disabled={busy || dirty || prepDirty}
+          onClick={() => { clearHistory(); setTab("patients"); setMessage(""); }} aria-label="Рядом — к пациентам">
+          рядом<span className="brand-mark">↗</span>
+        </button>
+        <span className="masthead-note">Пространство<br />психотерапевта.</span>
         <div className="header-right">
-          {me && !demo ? (
-            <button className="live-link" disabled={busy} onClick={() => void logout()}>
-              Выйти <ArrowUpRight size={14} />
-            </button>
-          ) : (
-            <Link href="/" className="live-link">
-              К пациентам <ArrowUpRight size={14} />
-            </Link>
-          )}
+          {patientHref && <Link className="live-link" href={patientHref} onClick={e => {
+            if (dirty || prepDirty) { e.preventDefault(); setMessage("Сохраните заметку и лист подготовки перед переходом."); }
+          }}>Кабинет пациента ↗</Link>}
+          {demo && <span className="demo-pill">ДЕМО</span>}
+          {me && <><span className="therapist-name">{me.name} / психотерапевт</span><span className="doctor-monogram">{me.name.slice(0, 1)}</span></>}
+          {me && !demo && <button className="live-link" disabled={busy} onClick={() => void logout()}>Выйти ↗</button>}
         </div>
       </header>
-      <div className="live-environment">
-        {demo
-          ? "ДЕМОНСТРАЦИЯ · ВЫМЫШЛЕННЫЕ ИСТОРИИ · БЕЗ ПОДКЛЮЧЕНИЯ К СЕРВЕРУ"
-          : "Стенд разработки · только вымышленные данные"}
-      </div>
-      {me && !demo && <Sessions key={me.id} disabled={busy}
-        read={() => api<SessionOverview>("v1/me/sessions")}
-        revoke={() => api("v1/me/sessions/revoke-others", { method: "POST", body: { confirmation: "REVOKE_OTHER_SESSIONS" } })}
-        onError={fail} />}
-      {demo && (
-        <div className="live-demo-tools">
-          <span>
-            Учебная практика <small>Изменения действуют до перезагрузки</small>
-          </span>
-          <div>
-            {selected && (
-              <button
-                className="live-link"
-                onClick={() => {
-                  simulation!.revoke(selected.id);
-                  clearHistory();
-                  void refreshList();
-                  setMessage(
-                    "Сценарий: пациент отозвал доступ. Его история и заметка больше недоступны.",
-                  );
-                }}
-              >
-                Показать отзыв доступа ↗
-              </button>
-            )}
-            <button
-              className="live-link"
-              onClick={() => {
-                simulation!.reset();
-                clearHistory();
-                setQuery("");
-                setError("");
-                setMessage("Демонстрация начата заново.");
-                void refreshList();
-              }}
-            >
-              Начать показ заново ↺
-            </button>
-          </div>
-        </div>
-      )}
+      {me?.role === "doctor" && <nav className="chapter-nav" aria-label="Разделы кабинета">
+        <button className={tab === "patients" ? "active" : ""} disabled={busy || dirty || prepDirty} onClick={() => { clearHistory(); setTab("patients"); }}><span>01</span>Пациенты <ArrowUpRight size={14} /></button>
+        <button className={tab === "preparation" ? "active" : ""} disabled={busy || dirty || prepDirty} onClick={() => { clearHistory(); setTab("preparation"); }}><span>02</span>Подготовка к встречам <ArrowUpRight size={14} /></button>
+        {!demo && <button className={tab === "account" ? "active" : ""} disabled={busy || dirty || prepDirty} onClick={() => { clearHistory(); setTab("account"); }}><span>03</span>Мои входы <ArrowUpRight size={14} /></button>}
+      </nav>}
       {error && (
         <div className="live-alert" role="alert">
           {error}
@@ -664,224 +629,21 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
             Выйти из пациентского аккаунта
           </button>
         </section>
+      ) : tab === "account" && !demo ? (
+        <section className="unified-account"><h1>Мои входы.</h1>
+          <Sessions key={me.id} disabled={busy}
+            read={() => api<SessionOverview>("v1/me/sessions")}
+            revoke={() => api("v1/me/sessions/revoke-others", { method: "POST", body: { confirmation: "REVOKE_OTHER_SESSIONS" } })}
+            onError={fail} />
+        </section>
       ) : !selected ? (
-        <>
-          <section className="live-intro live-practice-intro">
-            <div className="eyebrow">ВАША ПРАКТИКА / {me.name}</div>
-            <h1>
-              За каждой записью —<br />
-              <em>человек.</em>
-            </h1>
-            <p>Доступные дневники и наблюдения между встречами.</p>
-          </section>
-          <div className="live-registry-heading">
-            <h2>
-              Пациенты <span>{String(list.length).padStart(2, "0")}</span>
-            </h2>
-            <button
-              className="live-link"
-              disabled={busy}
-              onClick={() => {
-                setError("");
-                setBusy(true);
-                refreshList()
-                  .catch(fail)
-                  .finally(() => setBusy(false));
-              }}
-            >
-              <RefreshCw size={14} />
-              Обновить
-            </button>
-          </div>
-          <div
-            className="live-registry-overview"
-            aria-label="Обзор доступных дневников"
-          >
-            <div>
-              <strong>
-                {String(list.filter((p) => p.entryCount > 0).length).padStart(
-                  2,
-                  "0",
-                )}
-              </strong>
-              <span>дневников с записями</span>
-            </div>
-            <div>
-              <strong>
-                {String(list.filter((p) => p.entryCount === 0).length).padStart(
-                  2,
-                  "0",
-                )}
-              </strong>
-              <span>пока без записей</span>
-            </div>
-            <p>
-              За цифрами — дни, которыми человек решил поделиться. Количество
-              записей не оценивает его состояние.
-            </p>
-          </div>
-          <div className="live-registry-controls">
-            <label className="live-search">
-              Поиск по коду пациента
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Например, Р-014"
-                type="search"
-              />
-            </label>
-            <label className="live-sort">
-              Порядок
-              <select
-                value={registrySort}
-                onChange={(e) =>
-                  setRegistrySort(e.target.value as "latest" | "code")
-                }
-              >
-                <option value="latest">По дате последней записи</option>
-                <option value="code">По коду пациента</option>
-              </select>
-            </label>
-          </div>
-          <div
-            className="live-registry-filters"
-            role="group"
-            aria-label="Фильтр дневников"
-          >
-            {(
-              [
-                ["all", "Все"],
-                ["with", "С записями"],
-                ["empty", "Пока пустые"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                aria-pressed={registryFilter === value}
-                onClick={() => setRegistryFilter(value)}
-              >
-                {label}
-              </button>
-            ))}
-            <span role="status">
-              {registryLoading
-                ? "Обновляем реестр…"
-                : `Показано ${filteredPatients.length} из ${list.length}`}
-            </span>
-          </div>
-          <div className="live-registry-columns" aria-hidden="true">
-            <span>ДНЕВНИК</span>
-            <span>ПОСЛЕДНЯЯ ЗАПИСЬ</span>
-            <span>ВСЕГО</span>
-          </div>
-          <div className="live-patients">
-            {filteredPatients.length ? (
-              filteredPatients.map((patient, index) => (
-                <button
-                  className="live-patient-row"
-                  key={patient.id}
-                  onClick={() => {
-                    setError("");
-                    setMessage("");
-                    setSelected(patient);
-                  }}
-                >
-                  <span className="eyebrow">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <span className="live-patient-identity">
-                    <strong>{patient.displayCode}</strong>
-                    <small>Доступ с {showDate(patient.grantedAt)}</small>
-                  </span>
-                  <span className="live-patient-last">
-                    {patient.latestEntryDate
-                      ? showDate(patient.latestEntryDate)
-                      : "Пока нет записей"}
-                  </span>
-                  <span
-                    className="live-patient-count"
-                    aria-label={`Всего записей: ${patient.entryCount}`}
-                  >
-                    {patient.entryCount}
-                    <small>
-                      {
-                        {
-                          one: "запись",
-                          few: "записи",
-                          many: "записей",
-                          other: "записи",
-                          zero: "записей",
-                          two: "записи",
-                        }[new Intl.PluralRules("ru").select(patient.entryCount)]
-                      }
-                    </small>
-                  </span>
-                  <ArrowUpRight size={22} />
-                </button>
-              ))
-            ) : (
-              <div className="live-empty">
-                <h3>
-                  {registryLoading
-                    ? "Загружаем дневники…"
-                    : query || registryFilter !== "all"
-                      ? "Нет дневников по этому фильтру."
-                      : "Пока здесь чистый лист."}
-                </h3>
-                <p>
-                  {query || registryFilter !== "all"
-                    ? "Попробуйте другой код или выберите фильтр «Все»."
-                    : "Когда пациент передаст вам приглашение, здесь появится его история."}
-                </p>
-              </div>
-            )}
-          </div>
-          {!demo && !linkedInvitation ? (
-            <form onSubmit={accept} className="live-invite">
-              <div>
-                <span className="eyebrow">С РАЗРЕШЕНИЯ ПАЦИЕНТА</span>
-                <h2>Начать общую историю.</h2>
-                <p>
-                  Приглашение должно быть адресовано почте вашей учётной записи.
-                </p>
-              </div>
-              <div className="live-invite-control">
-                <label htmlFor="invitation-code">Код приглашения</label>
-                <input
-                  id="invitation-code"
-                  required
-                  value={code}
-                  maxLength={48}
-                  autoComplete="off"
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="Вставьте код, который прислал пациент"
-                />
-                <button
-                  className="primary"
-                  disabled={busy || !invitationCode(code.trim())}
-                >
-                  Принять приглашение <ArrowRight size={17} />
-                </button>
-              </div>
-            </form>
-          ) : demo ? (
-            <section className="live-invite">
-              <div>
-                <span className="eyebrow">ДОСТУП НАЧИНАЕТСЯ С ДОВЕРИЯ</span>
-                <h2>
-                  Пациент решает,
-                  <br />
-                  чем поделиться.
-                </h2>
-              </div>
-              <p>
-                В рабочем кабинете пациент передаёт приглашение для вашей почты.
-                Он может закрыть доступ в любой момент. Здесь разрешения учебные
-                — сценарий отзыва можно показать из истории пациента.
-              </p>
-            </section>
-          ) : null}
-        </>
+        <Registry patients={filteredPatients} all={list} loading={registryLoading} busy={busy}
+          preparation={tab === "preparation"} name={me.name} demo={demo}
+          query={query} onQuery={setQuery} filter={registryFilter} onFilter={setRegistryFilter}
+          sort={registrySort} onSort={setRegistrySort} profile={simulation?.profile}
+          onOpen={patient => { setError(""); setMessage(""); setSelected(patient); }}
+          onInvite={() => { setError(""); setCode(""); setInviteOpen(true); }}
+          onRefresh={() => { setError(""); setBusy(true); refreshList().catch(fail).finally(() => setBusy(false)); }} />
       ) : (
         <>
           <nav className="live-case-nav">
@@ -894,12 +656,12 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
             </button>
             <span className="eyebrow">ИСТОРИЯ / {selected.displayCode}</span>
           </nav>
-          <section className="live-case-title">
-            <h1>
-              Между
-              <br />
-              <em>встречами.</em>
-            </h1>
+          <section className="live-case-title case-heading">
+            <div>
+              <div className="eyebrow">ИСТОРИЯ ПАЦИЕНТА</div>
+              <h1>{simulation?.profile(selected.id)?.name || selected.displayCode}<span className="case-id">{simulation ? selected.displayCode : ""}</span></h1>
+              <p><span className="access-dot" />Доступ открыт пациентом · с {showDate(selected.grantedAt)}</p>
+            </div>
             <PeriodPicker
               value={range}
               disabled={busy || dirty || prepDirty || loading}
@@ -1030,7 +792,7 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
             </section>
             <aside className="live-note">
               <span className="eyebrow">К СЛЕДУЮЩЕЙ ВСТРЕЧЕ</span>
-              <h2>На полях.</h2>
+              <h2>Сначала услышать.<br /><em>Потом обсудить.</em></h2>
               <p>
                 {demo
                   ? "Учебная заметка. Остаётся в памяти этой вкладки до перезагрузки."
@@ -1097,6 +859,16 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
           </div>
         </>
       )}
+      <dialog ref={inviteDialog} onCancel={() => setInviteOpen(false)} aria-labelledby="invite-title" className="unified-invite">
+        <div className="modal-heading"><h2 id="invite-title">По приглашению пациента</h2><button className="icon-button" onClick={() => setInviteOpen(false)} aria-label="Закрыть приглашение"><X size={20} /></button></div>
+        <p>Пациент передаёт вам код и сам решает, когда закрыть доступ.</p>
+        {demo && <p className="info-box">Учебный пример: <strong>DEMO-048</strong>. Код добавляет вымышленный пустой дневник. Кабинеты на этой ссылке независимы.</p>}
+        {error && <p role="alert" className="live-alert">{error}</p>}
+        <form onSubmit={accept}><label htmlFor="invitation-code">Код, выданный пациентом</label>
+          <input id="invitation-code" value={code} onChange={e => setCode(e.target.value)} maxLength={48} placeholder={demo ? "DEMO-048" : "Код приглашения"} autoComplete="off" />
+          <button className="primary" disabled={busy || !(demo ? code.trim().length > 0 : invitationCode(code.trim()))}>Принять приглашение <ArrowRight size={16} /></button>
+        </form>
+      </dialog>
       <dialog
         aria-labelledby="report-title"
         ref={reportDialog}
@@ -1174,10 +946,19 @@ export default function LiveWorkspace({ demo = false }: { demo?: boolean }) {
           </>
         )}
       </dialog>
-      <footer className="live-footer">
-        <span>Рядом · пространство для совместной работы</span>
-        <span>Доступ к дневнику выдаёт и отзывает пациент.</span>
-      </footer>
+      {demo && <details className="unified-demo-controls">
+        <summary>Учебные данные · изменения до перезагрузки</summary>
+        <p>Вымышленные истории, без подключения к серверу. Кабинеты в публичном примере независимы.</p>
+        {selected && <button className="live-link" disabled={dirty || prepDirty || busy} onClick={() => {
+          simulation!.revoke(selected.id); clearHistory(); void refreshList();
+          setMessage("Учебный сценарий: пациент отозвал доступ. Его история и заметки убраны.");
+        }}>Показать отзыв доступа ↗</button>}
+        <button className="live-link" disabled={dirty || prepDirty || busy} onClick={() => {
+          simulation!.reset(); clearHistory(); setTab("patients"); setQuery(""); setRegistryFilter("all"); setError("");
+          setMessage("Учебные данные восстановлены."); void refreshList();
+        }}>Сбросить учебные изменения ↺</button>
+      </details>}
+      <footer className="unified-footer"><span className="footer-brand">рядом</span><span>Кабинет психотерапевта</span><span>Доступ к дневнику выдаёт и отзывает пациент.</span></footer>
     </main>
   );
 }

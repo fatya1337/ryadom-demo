@@ -1,5 +1,1 @@
-import Therapist from "../page";
-
-export default function Page() {
-  return <Therapist />;
-}
+export { default } from "../page";

@@ -1,0 +1,66 @@
+/* One cabinet: the original editorial shell around the shared working features. */
+.unified-workspace .unified-brand { background: none; border: 0; padding: 0; color: inherit; }
+.unified-workspace .header-right { gap: 24px; }
+.unified-workspace .registry-content { padding-top: 40px; }
+.unified-workspace .registry-content .therapist-heading h1 { font-weight: 500; }
+.unified-workspace .patient-search input { margin: 0; }
+.registry-order { display: flex; align-items: center; gap: 22px; padding-bottom: 22px; color: var(--muted); font: 10px var(--sans); }
+.registry-order > label { margin-left: auto; font-size: 10px; }
+.registry-order select { border: 0; background: transparent; color: var(--ink); font-size: 10px; padding: 8px; }
+.registry-order .live-link { font-size: 10px; }
+.registry-muted { font: 10px var(--sans); color: var(--muted); }
+.unified-roster .session-cell small { display: block; margin: 8px 0 0 12px; font-size: 9px; }
+.unified-workspace .live-case-title h1 { font: 500 clamp(36px, 4.3vw, 60px)/1.12 var(--sans); letter-spacing: -3px; margin: 20px 0 15px; overflow-wrap: anywhere; }
+.unified-workspace .live-case-title .case-id { font: 10px monospace; letter-spacing: 0; color: var(--muted); }
+.unified-workspace .live-case-title { padding-bottom: 28px; margin-bottom: 0; align-items: end; }
+.unified-workspace .live-case-grid { border-top: 1px solid var(--ink); gap: 46px; }
+.unified-workspace .live-note { border-top: 0; padding: 28px 0 0 28px; border-left: 1px solid var(--line); }
+.unified-workspace .live-note h2 { font: 500 23px/1.55 var(--sans); letter-spacing: -0.6px; }
+.unified-workspace .live-note h2 em { font: 400 21px/1.55 var(--serif); color: var(--blue); }
+.unified-workspace .live-note textarea { font-size: 12px; line-height: 1.8; }
+.unified-workspace .live-note .primary { font-size: 11px; justify-content: space-between; }
+.unified-workspace .live-registry-heading h2 { font-size: 20px; }
+.unified-demo-controls { border-top: 1px solid var(--line); margin-top: 42px; padding: 18px 0; color: var(--muted); font-size: 10px; }
+.unified-demo-controls summary { cursor: pointer; width: fit-content; }
+.unified-demo-controls p { line-height: 1.8; max-width: 650px; margin: 15px 0 5px; }
+.unified-demo-controls .live-link { font-size: 11px; margin-right: 24px; }
+.unified-footer { display: flex; align-items: center; gap: 25px; justify-content: space-between; border-top: 1px solid var(--ink); padding: 28px 0; margin-top: 24px; font: 10px var(--sans); color: var(--muted); }
+.unified-invite { max-width: 540px; }
+.unified-invite p { font-size: 13px; line-height: 1.8; }
+.unified-invite input { width: 100%; }
+.unified-invite .primary { width: 100%; justify-content: space-between; }
+.unified-account { padding: 50px 0; }
+.registry-content { animation: cabinet-arrival 350ms ease-out both; }
+@keyframes cabinet-arrival { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+@media (max-width: 900px) {
+  .unified-workspace .therapist-name { display: none; }
+  .unified-workspace .live-case-title { align-items: start; }
+}
+@media (max-width: 750px) {
+  .unified-workspace .live-case-grid { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .unified-workspace .live-note { padding: 28px 0 0; border-left: 0; border-top: 1px solid var(--ink); }
+  .registry-order { flex-wrap: wrap; gap: 10px 18px; }
+  .registry-order > label { margin-left: 0; }
+  .unified-workspace .header-right { gap: 15px; }
+}
+@media (max-width: 600px) {
+  .unified-workspace .masthead { flex-wrap: wrap; gap: 16px; padding: 24px 0 18px; }
+  .unified-workspace .header-right { margin-left: auto; }
+  .unified-workspace .doctor-monogram { display: none; }
+  .unified-workspace .header-right .live-link { font-size: 10px; }
+  .unified-workspace .chapter-nav { overflow-x: auto; gap: 24px; }
+  .unified-workspace .registry-content { padding-top: 26px; }
+  .unified-workspace .therapist-heading { gap: 25px; }
+  .unified-workspace .live-case-title h1 { letter-spacing: -1.8px; }
+  .unified-workspace .live-case-title .case-id { display: block; margin: 14px 0 0; }
+  .unified-footer { flex-wrap: wrap; gap: 16px; line-height: 1.8; }
+  .unified-workspace .session-action { font-size: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .registry-content { animation: none; }
+  .unified-workspace .roster-row, .unified-workspace .roster-row > svg { transition: none; }
+}
+@media print {
+  .unified-demo-controls, .unified-footer, .unified-workspace .chapter-nav { display: none !important; }
+}
+.unified-workspace .patient-search { display: flex; align-items: center; gap: 10px; }

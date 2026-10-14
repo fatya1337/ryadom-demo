@@ -22,6 +22,7 @@ export function createDemoBackend() {
     { id: "demo-027", displayCode: "Р-027", grantedAt: day(18) },
     { id: "demo-031", displayCode: "Р-031", grantedAt: day(0) },
   ];
+  let invitationAccepted = false;
   const journal = [
     "После прогулки было проще собраться с мыслями. Вечером читала.",
     "День прошёл спокойно. Записала несколько мыслей для следующей встречи.",
@@ -55,9 +56,19 @@ export function createDemoBackend() {
     if (path === "v1/me")
       return {
         id: "demo-doctor",
-        name: "Учебная практика",
+        name: "Анна",
         role: "doctor",
       } as T;
+    if (path === "v1/therapist/invitations/accept" && opts?.method === "POST") {
+      const code = (opts.body as { code?: string })?.code;
+      if (code?.toUpperCase() !== "DEMO-048" || invitationAccepted)
+        throw new RequestError(400, "INVITATION_UNAVAILABLE");
+      invitationAccepted = true;
+      const invited = { id: "demo-048", displayCode: "Р-048", grantedAt: day(0) };
+      patients.push(invited);
+      histories.set(invited.id, []);
+      return { patientCode: invited.displayCode } as T;
+    }
     if (path === "v1/therapist/patients")
       return patients
         .filter((p) => !revoked.has(p.id))
@@ -131,11 +142,24 @@ export function createDemoBackend() {
   };
   return {
     request,
+    profile: (id: string) => {
+      if (revoked.has(id) || !patients.some(p => p.id === id)) return undefined;
+      const names: Record<string, [string, string]> = {
+        "demo-014": ["Александра", "АЛ"], "demo-027": ["Михаил", "МИ"],
+        "demo-031": ["Дарья", "ДА"], "demo-048": ["Новый пациент", "НП"],
+      };
+      const [name, initials] = names[id] || [id, "—"];
+      return { name, initials, entries: (histories.get(id) || []).map(e => ({ ...e })) };
+    },
     revoke: (id: string) => {
       revoked.add(id);
     },
     reset: () => {
       revoked.clear();
+      invitationAccepted = false;
+      const invitedIndex = patients.findIndex(p => p.id === "demo-048");
+      if (invitedIndex >= 0) patients.splice(invitedIndex, 1);
+      histories.delete("demo-048");
       notes.clear();
       preparations.clear();
     },
